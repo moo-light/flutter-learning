@@ -1,5 +1,10 @@
+// ignore_for_file: avoid_print
 
 import 'package:flutter/material.dart';
+import 'package:todo_application/dtos/todos.dart';
+import 'package:todo_application/view/todos/todo_detail.dart';
+
+import 'view/todos/todo_create_update.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,23 +17,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Todo App',
+      title: 'Flutter Todo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
@@ -39,16 +29,6 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
 
   @override
@@ -56,43 +36,87 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<String> todos = List.empty();
+  final List<Todo> entries = [Todo('A'), Todo('B'), Todo('C')].toList();
+
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
+        // TRY THIS: Try changing the color here to a specific color (to
+        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
+        // change color while the other colors stay the same.
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        // Here we take the value from the MyHomePage object that was created by
+        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Column(
-        children: [
-          ListView.builder(
-            itemBuilder: (context, index) => _buildItem(context, index),
+      body: Column(children: [
+        Expanded(
+          child: SizedBox(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(8),
+              itemCount: entries.length,
+              itemBuilder: (context, index) => _buildItem(context, index),
+            ),
           ),
-          FloatingActionButton(
-            onPressed: () => {},
-            child: const Icon(Icons.add),
-          )
-        ],
-      ),
+        ),
+      ]),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            var result = await Navigator.push<Todo>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TodoCreateUpdate(Todo(""),title: "Create"),
+                ));
+            setState(() {
+              if (result != null) entries.add(result);
+            });
+          },
+          child: const Icon(Icons.add)),
     );
   }
 
-  _buildItem(BuildContext context, int index) {
-    return Row(
-      children: [
-        Checkbox(
-          value: false,
-          onChanged: (value) {},
-        ),
-        Text(todos[index])
-      ],
+  Widget _buildItem(context, index) {
+    return MaterialButton(
+      onPressed: () async {
+        int? result = await Navigator.push<int>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TodoDetail(
+                entry: entries[index],
+                index: index,
+              ),
+            ));
+        if (result != null) {
+          // Handle the result, which is an int
+          entries.removeAt(result);
+          print('Received result: $result');
+        } else {
+          // Handle the case where the user canceled or closed the screen without a result
+          print('User canceled or closed without a result');
+        }
+        setState(() {});
+      },
+      child: Container(
+        margin: const EdgeInsets.all(4.0),
+        child: Row(children: [
+          Checkbox(
+            value: entries[index].checked,
+            onChanged: (value) {
+              entries[index].checked = !entries[index].checked;
+              setState(() {});
+            },
+          ),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                entries[index].todo,
+              ),
+            ),
+          ),
+        ]),
+      ),
     );
   }
 }
