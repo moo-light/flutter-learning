@@ -1,0 +1,4 @@
+// decode json to user
+ var userList = (json.decode(response.body) as List)
+          .map((i) => User.fromJson(i))
+          .toList(); 
